@@ -2,3 +2,4 @@
 cvs_generated/
 data/
 vector_store/
+src/__pycache__/

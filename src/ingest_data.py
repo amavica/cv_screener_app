@@ -1,13 +1,10 @@
-# src/create_vector_store.py
+# src/ingest_data.py
 
+import os
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableMap
-from langchain_core.output_parsers import StrOutputParser
+from langchain_chroma import Chroma
 from dotenv import load_dotenv
 
 # --- Configuration ---
@@ -43,11 +40,11 @@ def create_vector_store():
 
     # 3. Create Embeddings
     print(f"Loading embedding model: '{EMBEDDING_MODEL_NAME}'...")
-    # This model runs locally on your CPU
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 
     # 4. Create and Persist Vector Store
     print(f"Creating and persisting vector store at '{VECTOR_STORE_PATH}'...")
+    # The Chroma class is now imported from langchain_chroma
     vector_store = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
@@ -57,5 +54,4 @@ def create_vector_store():
 
 # --- Main Execution Block ---
 if __name__ == "__main__":
-    # This allows the script to be run directly to perform the data ingestion.
     create_vector_store()
