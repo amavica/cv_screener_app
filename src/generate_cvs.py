@@ -32,13 +32,38 @@ if not OPENAI_API_KEY:
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Constants
-NUM_CVS_TO_GENERATE = 1
+NUM_CVS_TO_GENERATE = 5
 OUTPUT_JSON_DIR = "data"
 OUTPUT_IMAGE_DIR = "data"
 OUTPUT_PDF_DIR = "cvs_generated"
 
 # Define candidate personas to ensure variety in generated profiles
-PERSONAS = ["Software Engineer", "Data Scientist", "Product Manager", "UX Designer", "Marketing Manager", "Sales Manager", "HR Manager", "Financial Analyst", "Project Manager", "IT Manager", "Graphic Designer", "Copywriter", "Social Media Manager", "Content Strategist", "Event Planner", "Veterinarian", "Architect", "Lawyer", "Accountant", "Chef", "Photographer", "Videographer", "Journalist", "Editor", "Writer", "Reporter", "Analyst", "Strategist", "Consultant", "Trainer", "Coach", "Mentor", "Advisor", "Investor", "Entrepreneur", "Freelancer", "Consultant", "Strategist", "Trainer", "Coach", "Mentor", "Advisor", "Investor", "Entrepreneur", "Freelancer", "Consultant", "Strategist", "Trainer", "Coach", "Mentor", "Advisor", "Investor", "Entrepreneur", "Freelancer"]
+PERSONAS = ["Software Engineer", 
+    "Data Scientist",
+    "Product Manager",
+    "UX Designer",
+    "Marketing Manager",
+    "Sales Manager",
+    "HR Manager",
+    "Financial Analyst",
+    "Project Manager",
+    "IT Manager",
+    "Graphic Designer",
+    "Copywriter",
+    "Social Media Manager",
+    "Content Strategist",
+    "Event Planner",
+    "Veterinarian",
+    "Architect",
+    "Lawyer",
+    "Accountant",
+    "Chef",
+    "Photographer",
+    "Videographer",
+    "Journalist",
+    "Editor",
+    "Writer",
+    "Reporter"]
 
 # --- LLM and Prompt Setup ---
 llm = ChatOpenAI(
@@ -203,6 +228,18 @@ def create_cv_pdf(profile_data, index):
         print(f"Warning: Image not found for candidate {index}. Skipping PDF generation.")
         return
 
+    # Safely extract fields with sensible defaults
+    full_name = profile_data.get('full_name', f"Candidate {index:02d}")
+    job_title = profile_data.get('job_title', '')
+    contact = profile_data.get('contact', {}) or {}
+    email = contact.get('email', '')
+    phone = contact.get('phone', '')
+    linkedin = contact.get('linkedin', '')
+    summary = profile_data.get('summary', '')
+    skills_section = profile_data.get('skills', {}) or {}
+    work_experiences = profile_data.get('work_experience', []) or []
+    education_list = profile_data.get('education', []) or []
+
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -219,22 +256,25 @@ def create_cv_pdf(profile_data, index):
     pdf.set_font("Arial", "B", 10)
     pdf.cell(0, 5, "Contact", ln=True)
     pdf.set_font("Arial", "", 8)
-    pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"Email: {profile_data['contact']['email']}")
-    pdf.set_x(MARGIN)
-    pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"Phone: {profile_data['contact']['phone']}")
-    pdf.set_x(MARGIN)
-    pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"LinkedIn: {profile_data['contact']['linkedin']}")
+    if email:
+        pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"Email: {email}")
+    if phone:
+        pdf.set_x(MARGIN)
+        pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"Phone: {phone}")
+    if linkedin:
+        pdf.set_x(MARGIN)
+        pdf.multi_cell(SIDEBAR_WIDTH - 2 * MARGIN, 5, f"LinkedIn: {linkedin}")
     
     pdf.set_xy(MARGIN, pdf.get_y() + 10)
     pdf.set_font("Arial", "B", 10)
     pdf.cell(0, 5, "Skills", ln=True)
     
-    for skill_type, skills in profile_data['skills'].items():
+    for skill_type, skills in skills_section.items():
         pdf.set_font("Arial", "B", 8)
         pdf.set_x(MARGIN)
         pdf.cell(0, 5, skill_type.replace('_', ' ').title() + ":", ln=True)
         pdf.set_font("Arial", "", 8)
-        for skill in skills:
+        for skill in (skills or []):
             pdf.set_x(MARGIN + 2)
             pdf.cell(0, 5, f"- {skill}", ln=True)
 
@@ -243,27 +283,29 @@ def create_cv_pdf(profile_data, index):
     pdf.set_right_margin(MARGIN)
     pdf.set_xy(SIDEBAR_WIDTH + MARGIN, MARGIN)
     pdf.set_font("Arial", "B", 24)
-    pdf.cell(0, 10, profile_data['full_name'], ln=True)
+    pdf.cell(0, 10, full_name, ln=True)
     pdf.set_font("Arial", "I", 14)
-    pdf.cell(0, 8, profile_data['job_title'], ln=True)
+    pdf.cell(0, 8, job_title, ln=True)
     
     pdf.set_y(pdf.get_y() + 5)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 8, "Professional Summary", ln=True)
     pdf.set_font("Arial", "", 10)
-    pdf.multi_cell(MAIN_CONTENT_WIDTH, 5, profile_data['summary'])
+    pdf.multi_cell(MAIN_CONTENT_WIDTH, 5, summary)
     pdf.set_x(SIDEBAR_WIDTH + MARGIN)
     
     pdf.set_y(pdf.get_y() + 5)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 8, "Work Experience", ln=True)
-    for job in profile_data['work_experience']:
+    for job in work_experiences:
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(0, 6, f"{job['title']} | {job['company']}", ln=True)
+        title = job.get('title', '')
+        company = job.get('company', '')
+        pdf.cell(0, 6, f"{title} | {company}".strip(' |'), ln=True)
         pdf.set_font("Arial", "I", 9)
-        pdf.cell(0, 5, job['dates'], ln=True)
+        pdf.cell(0, 5, job.get('dates', ''), ln=True)
         pdf.set_font("Arial", "", 10)
-        for desc_point in job['description']:
+        for desc_point in (job.get('description', []) or []):
             pdf.multi_cell(MAIN_CONTENT_WIDTH, 5, f"- {desc_point}")
             pdf.set_x(SIDEBAR_WIDTH + MARGIN)
         pdf.ln(3)
@@ -272,13 +314,16 @@ def create_cv_pdf(profile_data, index):
     pdf.set_y(pdf.get_y() + 5)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 8, "Education", ln=True)
-    for edu in profile_data['education']:
+    for edu in education_list:
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(0, 6, f"{edu['degree']}", ln=True)
+        pdf.cell(0, 6, f"{edu.get('degree', '')}", ln=True)
         pdf.set_font("Arial", "", 10)
-        pdf.cell(0, 5, f"{edu['university']} ({edu['year']})", ln=True)
+        uni = edu.get('university', '')
+        yr = edu.get('year', '')
+        pdf.cell(0, 5, f"{uni} ({yr})" if uni or yr else "", ln=True)
         
-    pdf_file_name = f"{profile_data['full_name'].replace(' ', '_')}_CV.pdf"
+    safe_name = (full_name or f"candidate_{index:02d}").replace(' ', '_')
+    pdf_file_name = f"{safe_name}_CV.pdf"
     pdf_path = os.path.join(OUTPUT_PDF_DIR, pdf_file_name)
     pdf.output(pdf_path)
     print(f"  -> Successfully created PDF: {pdf_path}")
