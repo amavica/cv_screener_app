@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: cv_screener_app
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./cvs_generated:/app/cvs_generated
+      - ./vector_store:/app/vector_store
+    env_file:
+      - .env
+    restart: unless-stopped
