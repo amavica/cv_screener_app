@@ -18,6 +18,7 @@ help:
 	@echo "  logs           Follow the logs from the application container"
 	@echo "  shell          Get an interactive shell inside the application container"
 	@echo "  generate_cvs   Run the CV generation script inside the container"
+	@echo "  create_vector_store   Run the vector store creation script inside the container"
 
 build:
 	@echo "Building Docker image (ignoring cache)..."
@@ -50,3 +51,7 @@ shell:
 generate_cvs:
 	@echo "Generating CVs..."
 	docker-compose exec app python src/generate_cvs.py
+
+create_vector_store:
+	@echo "Creating vector store..."
+	docker-compose exec app python src/create_vector_store.py

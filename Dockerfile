@@ -6,7 +6,20 @@ WORKDIR /app
 
 # Copy the requirements file and install dependencies
 #COPY ./requirements.txt .
-RUN pip install --no-cache-dir langchain langchain-openai python-dotenv fpdf2 openai Pillow gradio
+RUN pip install --no-cache-dir langchain \
+langchain_openai \
+langchain_core \
+langchain-huggingface \
+langchain_community \
+langchain-text-splitters \
+python-dotenv \
+fpdf2 \
+openai \
+Pillow \
+gradio \
+chromadb \
+sentence-transformers \
+pypdf 
 
 # Copy the application source code
 COPY ./src ./src
