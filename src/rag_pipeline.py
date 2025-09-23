@@ -26,7 +26,14 @@ def get_rag_chain():
         persist_directory=VECTOR_STORE_PATH,
         embedding_function=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
     )
-    retriever = vector_store.as_retriever()
+
+    # Use Maximal Marginal Relevance (MMR) to find relevant and diverse documents.
+    # fetch_k: The total number of documents to initially fetch.
+    # k: The final number of documents to return.
+    retriever = vector_store.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": 1, "fetch_k": 20}
+    )
 
     # 2. Initialize the LLM
     llm = ChatOpenAI(
