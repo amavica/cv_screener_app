@@ -3,15 +3,12 @@
 import os
 import json
 import random
-import re
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from fpdf import FPDF
 from dotenv import load_dotenv
 from io import BytesIO
-
-# --- New Imports for Image Generation ---
 from openai import OpenAI
 from PIL import Image
 
